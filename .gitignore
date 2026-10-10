@@ -1,0 +1,25 @@
+# ---- OS / editor ----
+.DS_Store
+Thumbs.db
+.vscode/
+*.log
+
+# ---- Secrets & local config (never commit real credentials) ----
+config.local.php
+includes/db.local.php
+.env
+
+# ---- Uploaded content (keep the folder, ignore the files) ----
+assets/uploads/*
+!assets/uploads/.gitkeep
+
+# ---- PHP / Composer ----
+/vendor/
+
+# ---- Temporary files ----
+_*.php
+_*.txt
+_*.html
+_*.ps1
+_*.psm1
+

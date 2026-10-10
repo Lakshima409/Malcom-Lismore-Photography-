@@ -1,0 +1,14 @@
+# Malcolm Lismore Photography - Apache configuration
+
+# Use the custom 404 page and return a real HTTP 404 status.
+ErrorDocument 404 /Malcom%20Lismore/404.php
+
+# Serve a default index file.
+DirectoryIndex index.php index.html
+
+# ---------------------------------------------------------------------
+# Note: If this project is installed at a different path, update the
+# ErrorDocument path above to match (e.g. /404.php when at the web root,
+# or /malcolm-lismore/404.php for a folder named "malcolm-lismore").
+# ---------------------------------------------------------------------
+
