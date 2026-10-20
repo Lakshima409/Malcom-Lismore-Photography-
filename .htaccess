@@ -7,6 +7,16 @@ ErrorDocument 404 /Malcom%20Lismore/404.php
 DirectoryIndex index.php index.html
 
 # ---------------------------------------------------------------------
+# Block direct HTTP access to SQL dump files. These contain schema and
+# sample data and must not be downloadable via the web server.
+# Local command-line imports (e.g. `mysql < database/schema.sql`) read
+# files directly from disk and are NOT affected by this rule.
+# ---------------------------------------------------------------------
+<FilesMatch "\.sql$">
+  Require all denied
+</FilesMatch>
+
+# ---------------------------------------------------------------------
 # Note: If this project is installed at a different path, update the
 # ErrorDocument path above to match (e.g. /404.php when at the web root,
 # or /malcolm-lismore/404.php for a folder named "malcolm-lismore").

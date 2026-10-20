@@ -3,9 +3,8 @@
  * Unit tests for the authentication helpers.
  *
  * Covers is_admin_logged_in() (session state) and proves the password
- * hashing approach with password_verify(). The demo-credentials check reads
- * the real hash out of the database and skips gracefully if MySQL is
- * unreachable.
+ * hashing approach with password_verify(). Uses a throwaway test password
+ * defined exclusively for testing — never a real or default credential.
  */
 
 declare(strict_types=1);
@@ -13,6 +12,10 @@ declare(strict_types=1);
 use PHPUnit\Framework\TestCase;
 
 require_once __DIR__ . '/bootstrap.php';
+
+// Throwaway password used exclusively by this test file. Not a real account
+// credential and never used in production or sample data.
+define('TEST_PASSWORD', 'Test.Password-Secure-2026!');
 
 final class AuthTest extends TestCase
 {
@@ -48,38 +51,28 @@ final class AuthTest extends TestCase
 
     public function testPasswordHashVerifiesCorrectPassword(): void
     {
-        $hash = password_hash('Admin@1234', PASSWORD_DEFAULT);
-        $this->assertTrue(password_verify('Admin@1234', $hash));
+        $hash = password_hash(TEST_PASSWORD, PASSWORD_DEFAULT);
+        $this->assertTrue(password_verify(TEST_PASSWORD, $hash));
     }
 
     public function testPasswordHashRejectsWrongPassword(): void
     {
-        $hash = password_hash('Admin@1234', PASSWORD_DEFAULT);
-        $this->assertFalse(password_verify('Admin@12345', $hash));
+        $hash = password_hash(TEST_PASSWORD, PASSWORD_DEFAULT);
+        $this->assertFalse(password_verify(TEST_PASSWORD . 'wrong', $hash));
     }
 
     public function testHashIsNotPlaintext(): void
     {
         // The stored value must be a bcrypt hash, never the raw password.
-        $hash = password_hash('Admin@1234', PASSWORD_DEFAULT);
-        $this->assertNotSame('Admin@1234', $hash);
+        $hash = password_hash(TEST_PASSWORD, PASSWORD_DEFAULT);
+        $this->assertNotSame(TEST_PASSWORD, $hash);
         $this->assertMatchesRegularExpression('/^\$2[aby]\$/', $hash);
     }
 
-    public function testDocumentedDemoCredentialsMatchStoredHash(): void
+    public function testHashIsBcryptWithDefaultCost(): void
     {
-        if (!tests_db_available()) {
-            $this->markTestSkipped('Database not reachable - skipping live credential check.');
-        }
-
-        $stmt = db()->prepare('SELECT password_hash FROM admins WHERE username = ? LIMIT 1');
-        $stmt->execute(['admin']);
-        $hash = $stmt->fetchColumn();
-
-        $this->assertNotFalse($hash, 'Demo admin user "admin" should exist in the seed data.');
-        $this->assertTrue(
-            password_verify('Admin@1234', (string) $hash),
-            'The documented demo password Admin@1234 must verify against the stored hash.'
-        );
+        $hash = password_hash(TEST_PASSWORD, PASSWORD_DEFAULT);
+        // PASSWORD_DEFAULT uses bcrypt ($2y$) on PHP 8.x.
+        $this->assertMatchesRegularExpression('/^\$2y\$\d{2}\$/', $hash);
     }
 }

@@ -1,0 +1,78 @@
+<?php
+/**
+ * One-time administrator bootstrap script.
+ *
+ * Creates the first administrator account, displays the credentials once in
+ * the terminal, then disables itself (renames to .locked or removes itself)
+ * so it cannot be re-run.
+ *
+ * Usage: php setup-admin.php
+ *
+ * WARNING: Edit the $db settings below before running.
+ */
+
+declare(strict_types=1);
+
+// ---- Database connection (same config as includes/db.php) ----------------
+define('DB_HOST', '127.0.0.1');
+define('DB_PORT', '3307');
+define('DB_NAME', 'malcolm_lismore');
+define('DB_USER', 'root');
+define('DB_PASS', '');
+define('DB_CHARSET', 'utf8mb4');
+
+$dsn = 'mysql:host=' . DB_HOST . ';port=' . DB_PORT . ';dbname=' . DB_NAME . ';charset=' . DB_CHARSET;
+$options = [
+    PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
+    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+    PDO::ATTR_EMULATE_PREPARES   => false,
+];
+
+try {
+    $pdo = new PDO($dsn, DB_USER, DB_PASS, $options);
+} catch (PDOException $e) {
+    fwrite(STDERR, 'Database connection failed: ' . $e->getMessage() . PHP_EOL);
+    exit(1);
+}
+
+// ---- Bootstrap configuration ----------------------------------------------
+$adminUsername = 'admin';
+$adminPassword = 'ChangeMeImmediately!'; // MUST be changed on first login
+
+// ---- Check if an admin already exists -------------------------------------
+$stmt = $pdo->query('SELECT admin_id FROM admins LIMIT 1');
+if ($stmt->fetch()) {
+    fwrite(STDERR, "ERROR: An administrator already exists. Refusing to run.\n" .
+        "Remove the existing admin account before running this script again.\n");
+    exit(1);
+}
+
+// ---- Create the admin -----------------------------------------------------
+$passwordHash = password_hash($adminPassword, PASSWORD_DEFAULT);
+$stmt = $pdo->prepare('INSERT INTO admins (username, password_hash) VALUES (?, ?)');
+$stmt->execute([$adminUsername, $passwordHash]);
+
+$adminId = (int) $pdo->lastInsertId();
+
+fwrite(STDOUT, PHP_EOL);
+fwrite(STDOUT, "==============================================================" . PHP_EOL);
+fwrite(STDOUT, "  Administrator account created successfully.\n" . PHP_EOL);
+fwrite(STDOUT, "  Username : $adminUsername\n" .
+    "  Password : $adminPassword\n" .
+    "  Admin ID : $adminId\n" . PHP_EOL);
+fwrite(STDOUT, "  IMPORTANT: Write down your password. You must change it upon" . PHP_EOL);
+fwrite(STDOUT, "  first login. The bootstrap script will now self-destruct." . PHP_EOL);
+fwrite(STDOUT, "==============================================================" . PHP_EOL);
+fwrite(STDOUT, PHP_EOL);
+
+// ---- Disable this script -------------------------------------------------
+$scriptPath = __DIR__ . '/' . basename(__FILE__);
+if (rename($scriptPath, $scriptPath . '.locked')) {
+    fwrite(STDOUT, "Bootstrap script disabled (renamed to .locked)." . PHP_EOL);
+} else {
+    // Fallback: delete the file
+    @unlink($scriptPath);
+    fwrite(STDOUT, "Bootstrap script deleted." . PHP_EOL);
+}
+
+fwrite(STDOUT, PHP_EOL . "Complete. Log in at /admin/login.php" . PHP_EOL);

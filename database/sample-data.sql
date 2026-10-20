@@ -1,5 +1,7 @@
 -- =====================================================================
 --  Malcolm Lismore Photography - Sample / demonstration data
+--  ALL DATA IS FICTIONAL. Names, emails, phone numbers, addresses and
+--  booking enquiries are invented for demonstration purposes only.
 --  Run AFTER schema.sql
 -- =====================================================================
 
@@ -102,13 +104,8 @@ INSERT INTO enquiries (name, email, phone, service_type, event_date, location, b
 ('Rory Sinclair', 'rory.sinclair@example.com', '07700 900789', 'Landscape & Wildlife Commissions', NULL, 'Isle of Skye', 'Â£500+', 'Interested in a bespoke print of the Cuillin at sunrise. Do you offer large format fine-art prints?', 'booked', '2025-01-05 11:15:00');
 
 -- ---------------------------------------------------------------------
---  Administrator account
---  Default login ->  username: admin   password: Admin@1234
---  !! SECURITY !! Change this password immediately after your first login.
---  For a public deployment, do not rely on the default credentials --
---  create your own admin account and remove/disable this one.
---  The hash below was generated with PHP password_hash().
+--  No default administrator account is provided.
+--  Create your own admin account before first use (see README.md, section 4).
+--  The `admins` table exists but is empty after importing this file.
 -- ---------------------------------------------------------------------
-INSERT INTO admins (username, password_hash) VALUES
-('admin', '$2y$10$snYqogpZhVfPiZG2EQjpHO781qGaQsYi6w9Bk4K6ekdMuPvhZN3Ju');
 

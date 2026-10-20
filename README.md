@@ -77,7 +77,28 @@ Secure, session-based administration:
    `DB_PASS` and `DB_CHARSET` from the environment, falling back to the XAMPP
    defaults when unset.
 
-4. **Admin login** (demo account created by `sample-data.sql`):
+4. **Create an administrator** – No default admin account is created. Before your first deployment, run one of the following:
+
+   **Option A – Manual** (recommended): Insert an admin row directly into the database:
+
+   ```sql
+   INSERT INTO admins (username, password_hash) VALUES
+   ('admin', '$2y$10$YourRandomHashHere...');
+   ```
+
+   Generate the hash with: `php -r "echo password_hash('YourStrongPasswordHere', PASSWORD_DEFAULT);"`
+   Then set `APP_ENV=production` and configure the `DB_*` environment variables before deployment.
+
+   **Option B – One-time bootstrap script**: Copy `setup-admin.php.example` to `setup-admin.php` and
+   configure your database credentials at the top of the file. Run it once from the command line:
+
+   ```bash
+   php setup-admin.php
+   ```
+
+   The script creates the first admin account, displays the credentials once in the terminal, then
+   disables itself so it cannot be re-run. This prevents the script from being reused to reset
+   the administrator password.
    - **Username:** `admin`
    - **Password:** `Admin@1234`
 
