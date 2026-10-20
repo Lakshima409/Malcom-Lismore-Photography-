@@ -27,60 +27,10 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 // Verify the CSRF token before doing anything else.
 csrf_check_or_abort();
 
-// Collect and trim the input.
-$old = [
-    'name'         => trim((string) ($_POST['name'] ?? '')),
-    'email'        => trim((string) ($_POST['email'] ?? '')),
-    'phone'        => trim((string) ($_POST['phone'] ?? '')),
-    'service_type' => trim((string) ($_POST['service_type'] ?? '')),
-    'event_date'   => trim((string) ($_POST['event_date'] ?? '')),
-    'location'     => trim((string) ($_POST['location'] ?? '')),
-    'budget'       => trim((string) ($_POST['budget'] ?? '')),
-    'message'      => trim((string) ($_POST['message'] ?? '')),
-];
-
-$errors = [];
-
-// --- Validation -------------------------------------------------------
-if ($old['name'] === '') {
-    $errors['name'] = 'Please enter your name.';
-} elseif (mb_strlen($old['name']) > 100) {
-    $errors['name'] = 'Your name must be 100 characters or fewer.';
-}
-
-if ($old['email'] === '') {
-    $errors['email'] = 'Please enter your email address.';
-} elseif (!filter_var($old['email'], FILTER_VALIDATE_EMAIL)) {
-    $errors['email'] = 'Please enter a valid email address.';
-}
-
-if ($old['phone'] !== '' && !preg_match('/^[0-9+()\-\s]{7,25}$/', $old['phone'])) {
-    $errors['phone'] = 'Please enter a valid telephone number.';
-}
-
-if ($old['service_type'] === '') {
-    $errors['service_type'] = 'Please choose a photography service.';
-}
-
-if ($old['event_date'] !== '') {
-    // Validate the date format (Y-m-d).
-    $d = DateTime::createFromFormat('Y-m-d', $old['event_date']);
-    if (!$d || $d->format('Y-m-d') !== $old['event_date']) {
-        $errors['event_date'] = 'Please enter a valid date.';
-    } else {
-        $old['event_date'] = $d->format('Y-m-d');
-    }
-} else {
-    $old['event_date'] = null;
-}
-
-if ($old['message'] === '') {
-    $errors['message'] = 'Please tell us a little about your enquiry.';
-}
-
-if (empty($_POST['consent'])) {
-    $errors['consent'] = 'Please accept the privacy notice to continue.';
-}
+// Validate the submission using the shared, unit-tested validator.
+$result = validate_enquiry($_POST);
+$errors = $result['errors'];
+$old    = $result['data'];
 
 // If there are validation errors, return to the form with the values.
 if (!empty($errors)) {

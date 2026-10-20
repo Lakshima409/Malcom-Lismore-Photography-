@@ -68,12 +68,22 @@ Secure, session-based administration:
 
 3. **Database connection** – `includes/db.php` connects to
    `127.0.0.1:3307` (XAMPP's default when MySQL uses the alternate port) as
-   `root` with no password. Adjust the host/credentials there if your setup
-   differs. In production, keep credentials out of the web root.
+   `root` with no password by default.
+
+   **For production / public deployment:** Do not hardcode credentials.
+   Copy `.env.example` to `.env` (gitignored, never commit it) and set the
+   `DB_*` environment variables there, or set them in your server environment.
+   `includes/db.php` reads `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`,
+   `DB_PASS` and `DB_CHARSET` from the environment, falling back to the XAMPP
+   defaults when unset.
 
 4. **Admin login** (demo account created by `sample-data.sql`):
    - **Username:** `admin`
    - **Password:** `Admin@1234`
+
+   ⚠️ **SECURITY:** Change this password immediately after your first login.
+   For a public deployment, create your own admin account and remove or disable
+   the default one. Never deploy with the default credentials in place.
 
 5. **View the site** – visit
    [http://localhost/Malcom%20Lismore/index.php](http://localhost/Malcom%20Lismore/index.php)

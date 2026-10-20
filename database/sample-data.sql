@@ -104,7 +104,9 @@ INSERT INTO enquiries (name, email, phone, service_type, event_date, location, b
 -- ---------------------------------------------------------------------
 --  Administrator account
 --  Default login ->  username: admin   password: Admin@1234
---  (Change this password after your first login.)
+--  !! SECURITY !! Change this password immediately after your first login.
+--  For a public deployment, do not rely on the default credentials --
+--  create your own admin account and remove/disable this one.
 --  The hash below was generated with PHP password_hash().
 -- ---------------------------------------------------------------------
 INSERT INTO admins (username, password_hash) VALUES

@@ -270,6 +270,84 @@ function handle_image_upload(array $file): array
 
 
 /**
+ * Validate a booking-enquiry submission.
+ *
+ * This is the server-side validation used by submit-enquiry.php, extracted
+ * into a standalone function so it can be reused and unit-tested in
+ * isolation. It does NOT touch the database or the session.
+ *
+ * @param array<string, mixed> $input Raw form input (e.g. $_POST).
+ * @return array{errors: array<string, string>, data: array<string, mixed>}
+ *         'errors' maps field name -> message (empty when valid);
+ *         'data' holds the cleaned/normalised values ready to persist.
+ */
+function validate_enquiry(array $input): array
+{
+    $old = [
+        'name'         => trim((string) ($input['name'] ?? '')),
+        'email'        => trim((string) ($input['email'] ?? '')),
+        'phone'        => trim((string) ($input['phone'] ?? '')),
+        'service_type' => trim((string) ($input['service_type'] ?? '')),
+        'event_date'   => trim((string) ($input['event_date'] ?? '')),
+        'location'     => trim((string) ($input['location'] ?? '')),
+        'budget'       => trim((string) ($input['budget'] ?? '')),
+        'message'      => trim((string) ($input['message'] ?? '')),
+        'consent'      => !empty($input['consent']),
+    ];
+
+    $errors = [];
+
+    // Name: required, max 100 chars.
+    if ($old['name'] === '') {
+        $errors['name'] = 'Please enter your name.';
+    } elseif (mb_strlen($old['name']) > 100) {
+        $errors['name'] = 'Your name must be 100 characters or fewer.';
+    }
+
+    // Email: required and must be a valid address.
+    if ($old['email'] === '') {
+        $errors['email'] = 'Please enter your email address.';
+    } elseif (filter_var($old['email'], FILTER_VALIDATE_EMAIL) === false) {
+        $errors['email'] = 'Please enter a valid email address.';
+    }
+
+    // Phone: optional, but must match an allowed pattern when supplied.
+    if ($old['phone'] !== '' && preg_match('/^[0-9+()\-\s]{7,25}$/', $old['phone']) !== 1) {
+        $errors['phone'] = 'Please enter a valid telephone number.';
+    }
+
+    // Service: required.
+    if ($old['service_type'] === '') {
+        $errors['service_type'] = 'Please choose a photography service.';
+    }
+
+    // Event date: optional, but must be a real Y-m-d date when supplied.
+    if ($old['event_date'] !== '') {
+        $d = DateTime::createFromFormat('Y-m-d', $old['event_date']);
+        if (!$d || $d->format('Y-m-d') !== $old['event_date']) {
+            $errors['event_date'] = 'Please enter a valid date.';
+        } else {
+            $old['event_date'] = $d->format('Y-m-d');
+        }
+    } else {
+        $old['event_date'] = null;
+    }
+
+    // Message: required.
+    if ($old['message'] === '') {
+        $errors['message'] = 'Please tell us a little about your enquiry.';
+    }
+
+    // Consent: required.
+    if ($old['consent'] === false) {
+        $errors['consent'] = 'Please accept the privacy notice to continue.';
+    }
+
+    return ['errors' => $errors, 'data' => $old];
+}
+
+
+/**
  * Simple flash-message helper stored in the session.
  */
 function set_flash(string $type, string $message): void

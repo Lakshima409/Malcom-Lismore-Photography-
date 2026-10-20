@@ -16,6 +16,10 @@ assets/uploads/*
 # ---- PHP / Composer ----
 /vendor/
 
+# ---- Test runner (download phpunit.phar locally, see docs/test-plan.md) ----
+/phpunit.phar
+/.phpunit.cache/
+
 # ---- Temporary files ----
 _*.php
 _*.txt

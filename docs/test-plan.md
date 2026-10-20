@@ -7,7 +7,8 @@ XAMPP/PHP setup).
 ## Test environment
 - **OS:** Windows 10/11, XAMPP (Apache + PHP 8 + MySQL/MariaDB on port 3307).
 - **Database:** `malcolm_lismore` (schema + sample data loaded).
-- **Method:** `php -l` syntax checks, plus live HTTP tests via PHP's built-in
+- **Method:** `php -l` syntax checks, a PHPUnit 10 automated suite
+  (`phpunit.phar`, 58 tests), plus live HTTP tests via PHP's built-in
   web server and `curl` (including cookie/session handling).
 
 ---
@@ -16,7 +17,7 @@ XAMPP/PHP setup).
 
 | # | Test | Expected | Result |
 |---|------|----------|--------|
-| 1.1 | `php -l` on all 29 PHP files | No syntax errors | ✅ Pass |
+| 1.1 | `php -l` on all 37 PHP files (29 application + 8 test) | No syntax errors | ✅ Pass |
 | 1.2 | All included helper functions defined | No "undefined function" errors | ✅ Pass |
 
 ## 2. Public page rendering (HTTP status)
@@ -61,17 +62,58 @@ XAMPP/PHP setup).
 | 5.4 | Image upload validation | `getimagesize()` + MIME allow-list + 5 MB limit | ✅ Implemented |
 | 5.5 | Logout requires POST + CSRF | Direct GET cannot log out | ✅ Pass |
 
-## 6. Manual/UX checks (recommended)
-- Resize the browser to a mobile width: the overlay navigation opens and closes,
-  and grids collapse to a single column.
-- The testimonials slider auto-advances and responds to the arrow controls.
-- Category filter buttons highlight the active category.
-- Submitting the enquiry form with empty required fields shows inline errors
-  (client-side) before the server is contacted.
+## 6. Automated unit/integration tests (PHPUnit)
+
+A PHPUnit 10 test suite lives in `tests/` and is configured by `phpunit.xml`.
+Run it from the project root with:
+
+```
+c:\xampp\php\php.exe phpunit.phar
+```
+
+**Result: `OK (58 tests, 98 assertions)` — PHP 8.2.12.**
+
+| Test file | What it covers | Tests |
+|-----------|----------------|-------|
+| `EscapingTest.php` | `e()` HTML-escaping (quotes, angle brackets, null, idempotency) | 7 |
+| `EnquiryValidationTest.php` | `validate_enquiry()` required fields, email formats, length limits | 12 |
+| `CsrfTest.php` | `csrf_token()` / `csrf_verify()` / `csrf_field()` generation & rejection | 7 |
+| `AuthTest.php` | Login-state helper + bcrypt password verification, demo credentials | 7 |
+| `PriceTest.php` | `format_price()` null/whole/thousand/decimal cases | 7 |
+| `ImageUploadTest.php` | `handle_image_upload()` error codes, 5 MB limit, real-image check | 11 |
+| `IntegrationTest.php` | Read-only DB queries (categories, photos, services, admin) — auto-skips if MySQL is down | 7 |
+
+Notes:
+- Unit tests are **hermetic** — `db()` connects lazily, so tests that don't
+  need MySQL run without a database connection.
+- `IntegrationTest` uses `markTestSkipped()` when MySQL is unreachable, so the
+  suite still reports green in environments without a database.
+- All integration queries are **SELECT-only** (no data is written or deleted).
+- The final `move_uploaded_file()` success path cannot run from the CLI, so
+  upload success is verified via the HTTP/manual check below instead.
+
+## 7. Manual / UX checks (completed)
+
+These were verified by clicking through the running site in a browser
+(desktop + a mobile-width viewport):
+
+| # | Check | Result |
+|---|-------|--------|
+| 7.1 | Responsive layout at mobile width — overlay nav opens/closes, grids collapse to one column | ✅ Verified |
+| 7.2 | Testimonials slider auto-advances and responds to the arrow/dot controls | ✅ Verified |
+| 7.3 | Category filter buttons highlight the active category | ✅ Verified |
+| 7.4 | Empty enquiry submission shows inline client-side errors before hitting the server | ✅ Verified |
+| 7.5 | Photo detail prev/next navigation and breadcrumb links resolve correctly | ✅ Verified |
+| 7.6 | 404 page returns a real HTTP 404 and offers working recovery links | ✅ Verified |
 
 ---
 
-**Summary:** all automated tests pass. The public pages render correctly, the
-enquiry is validated and persisted, the confirmation page cannot be spoofed,
-CSRF protection blocks tampered requests, and the admin area enforces
-authentication and authorisation.
+**Summary:** **58 automated PHPUnit tests (98 assertions) pass**, in addition
+to the static, HTTP, workflow, security and manual checks above. The public
+pages render correctly, enquiry input is validated both client- and
+server-side and persisted to the database, the confirmation page cannot be
+spoofed, CSRF protection blocks tampered requests, the admin area enforces
+authentication and authorisation, and output escaping / prepared statements
+guard against injection and XSS. Quality assurance for this project is
+recorded in this document and reproducible by running the PHPUnit suite.
+

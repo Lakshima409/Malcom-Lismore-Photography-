@@ -18,12 +18,14 @@
 declare(strict_types=1);
 
 // ---- Configuration ----------------------------------------------------
-define('DB_HOST', '127.0.0.1');
-define('DB_PORT', '3307');
-define('DB_NAME', 'malcolm_lismore');
-define('DB_USER', 'root');
-define('DB_PASS', '');
-define('DB_CHARSET', 'utf8mb4');
+// Credentials can be overridden via environment variables (recommended for
+// production). Sensible XAMPP defaults are used when no env var is set.
+define('DB_HOST', getenv('DB_HOST') ?: '127.0.0.1');
+define('DB_PORT', getenv('DB_PORT') ?: '3307');
+define('DB_NAME', getenv('DB_NAME') ?: 'malcolm_lismore');
+define('DB_USER', getenv('DB_USER') ?: 'root');
+define('DB_PASS', getenv('DB_PASS') ?: '');
+define('DB_CHARSET', getenv('DB_CHARSET') ?: 'utf8mb4');
 
 /**
  * Create and return a shared PDO connection.
